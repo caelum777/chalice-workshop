@@ -95,7 +95,7 @@ def get_todo(uid):
 def delete_todo(uid):
     username = get_authorized_username(app.current_request)
     get_app_db().delete_item(uid, username=username)
-    Response(body={'message': "Successfully deleted item"},
+    return Response(body={'message': "Successfully deleted item"},
              status_code=200,
              headers={'Content-Type': 'application/json'})
 
