@@ -1,4 +1,4 @@
-from chalice import Chalice
+from chalice import Chalice, Response
 from chalicelib import db
 
 
@@ -16,33 +16,56 @@ def get_app_db():
 
 @app.route('/todos', methods=['GET'])
 def get_todos():
-    return get_app_db().list_items()
+    return Response(body={'todos': get_app_db().list_items()},
+                    status_code=200,
+                    headers={'Content-Type': 'application/json'})
 
 
 @app.route('/todos', methods=['POST'])
 def add_new_todo():
     body = app.current_request.json_body
-    return get_app_db().add_item(
-        description=body['description'],
+    todo_id = get_app_db().add_item(
+        description=body.get('description'),
         metadata=body.get('metadata'),
     )
+    return Response(body={'item_id': todo_id},
+                    status_code=200,
+                    headers={'Content-Type': 'application/json'})
 
 
 @app.route('/todos/{uid}', methods=['GET'])
 def get_todo(uid):
-    return get_app_db().get_item(uid)
+    try:
+        return Response(body={'todo': get_app_db().get_item(uid)},
+                        status_code=200,
+                        headers={'Content-Type': 'application/json'})
+    except Exception as ex:
+        return Response(body={'message': f"Item [{uid}] does not exist"},
+                        status_code=400,
+                        headers={'Content-Type': 'application/json'})
 
 
 @app.route('/todos/{uid}', methods=['DELETE'])
 def delete_todo(uid):
-    return get_app_db().delete_item(uid)
+    get_app_db().delete_item(uid)
+    return Response(body={'message': "Successfully deleted item"},
+                    status_code=200,
+                    headers={'Content-Type': 'application/json'})
 
 
 @app.route('/todos/{uid}', methods=['PUT'])
 def update_todo(uid):
     body = app.current_request.json_body
-    get_app_db().update_item(
-        uid,
-        description=body.get('description'),
-        state=body.get('state'),
-        metadata=body.get('metadata'))
+    try:
+        get_app_db().update_item(
+            uid,
+            description=body.get('description'),
+            state=body.get('state'),
+            metadata=body.get('metadata'))
+        return Response(body={'message': "Successfully updated item"},
+                        status_code=200,
+                        headers={'Content-Type': 'application/json'})
+    except Exception as ex:
+        return Response(body={'message': f"Item [{uid}] does not exist"},
+                        status_code=400,
+                        headers={'Content-Type': 'application/json'})
