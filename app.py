@@ -1,6 +1,6 @@
 import os
 import boto3
-from chalice import Chalice, AuthResponse
+from chalice import Chalice, AuthResponse, Response
 from chalicelib import auth, db
 
 
@@ -8,6 +8,9 @@ app = Chalice(app_name='chalice-workshop')
 app.debug = True
 _DB = None
 _USER_DB = None
+
+# Change this to use any desired aws profile
+# boto3.setup_default_session(profile_name="andres")
 
 
 @app.route('/login', methods=['POST'])
@@ -55,39 +58,63 @@ def get_authorized_username(current_request):
 @app.route('/todos', methods=['GET'], authorizer=jwt_auth)
 def get_todos():
     username = get_authorized_username(app.current_request)
-    return get_app_db().list_items(username=username)
+    todos = get_app_db().list_items(username=username)
+    return Response(body={'todos': todos},
+                    status_code=200,
+                    headers={'Content-Type': 'application/json'})
 
 
 @app.route('/todos', methods=['POST'], authorizer=jwt_auth)
 def add_new_todo():
     body = app.current_request.json_body
     username = get_authorized_username(app.current_request)
-    return get_app_db().add_item(
+    todo_id = get_app_db().add_item(
         username=username,
-        description=body['description'],
+        description=body.get('description'),
         metadata=body.get('metadata'),
     )
+    return Response(body={'item_id': todo_id},
+                    status_code=200,
+                    headers={'Content-Type': 'application/json'})
 
 
 @app.route('/todos/{uid}', methods=['GET'], authorizer=jwt_auth)
 def get_todo(uid):
-    username = get_authorized_username(app.current_request)
-    return get_app_db().get_item(uid, username=username)
+    try:
+        username = get_authorized_username(app.current_request)
+        return Response(body={'todo': get_app_db().get_item(uid, username=username)},
+                        status_code=200,
+                        headers={'Content-Type': 'application/json'})
+    except Exception as ex:
+        return Response(body={'message': f"Item [{uid}] does not exist"},
+                        status_code=400,
+                        headers={'Content-Type': 'application/json'})
 
 
 @app.route('/todos/{uid}', methods=['DELETE'], authorizer=jwt_auth)
 def delete_todo(uid):
     username = get_authorized_username(app.current_request)
-    return get_app_db().delete_item(uid, username=username)
+    get_app_db().delete_item(uid, username=username)
+    Response(body={'message': "Successfully deleted item"},
+             status_code=200,
+             headers={'Content-Type': 'application/json'})
 
 
 @app.route('/todos/{uid}', methods=['PUT'], authorizer=jwt_auth)
 def update_todo(uid):
-    body = app.current_request.json_body
-    username = get_authorized_username(app.current_request)
-    get_app_db().update_item(
-        uid,
-        description=body.get('description'),
-        state=body.get('state'),
-        metadata=body.get('metadata'),
-        username=username)
+    try:
+        body = app.current_request.json_body
+        username = get_authorized_username(app.current_request)
+        get_app_db().update_item(
+            uid,
+            description=body.get('description'),
+            state=body.get('state'),
+            metadata=body.get('metadata'),
+            username=username)
+        return Response(body={'message': "Successfully updated item"},
+                        status_code=200,
+                        headers={'Content-Type': 'application/json'})
+    except Exception as ex:
+        return Response(body={'message': f"Item [{uid}] does not exist"},
+                        status_code=400,
+                        headers={'Content-Type': 'application/json'})

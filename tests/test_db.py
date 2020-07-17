@@ -27,7 +27,7 @@ class TestTodoDB(unittest.TestCase):
 
     def test_can_add_and_list_data(self):
         todo_id = self.db.add_item('First item')
-        todos = self.db.list_items()
+        todos = list(self.db.list_items())
         self.assertEqual(len(todos), 1)
         self.assertEqual(todos[0]['uid'], todo_id)
 
@@ -57,7 +57,7 @@ class TestTodoDB(unittest.TestCase):
     def test_can_add_and_list_data_with_specified_username(self):
         username = 'myusername'
         todo_id = self.db.add_item('First item', username=username)
-        todos = self.db.list_items(username=username)
+        todos = list(self.db.list_items(username=username))
         self.assertEqual(len(todos), 1)
         self.assertEqual(todos[0]['uid'], todo_id)
         self.assertEqual(todos[0]['username'], username)
@@ -87,12 +87,13 @@ class TestTodoDB(unittest.TestCase):
         self.assertCountEqual([todo_id, other_todo_id], todo_ids)
 
 
-@unittest.skipUnless(os.environ.get('RUN_INTEG_TESTS', False),
-                     "Skipping integ tests (RUN_INTEG_TESTS) not test.")
+#@unittest.skipUnless(os.environ.get('RUN_INTEG_TESTS', False),
+#                     "Skipping integ tests (RUN_INTEG_TESTS) not test.")
 class TestDynamoDB(TestTodoDB):
     @classmethod
     def setUpClass(cls):
         cls.TABLE_NAME = 'todo-integ-%s' % str(uuid4())
+        boto3.setup_default_session(profile_name="andres")
         client = boto3.client('dynamodb')
         client.create_table(
             TableName=cls.TABLE_NAME,
