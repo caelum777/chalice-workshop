@@ -8,6 +8,8 @@ app = Chalice(app_name='chalice-workshop')
 app.debug = True
 _DB = None
 
+# Change this to use any desired aws profile
+# boto3.setup_default_session(profile_name="andres")
 
 def get_app_db():
     global _DB
