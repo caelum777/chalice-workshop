@@ -68,12 +68,14 @@ def record_as_env_var(key, value, stage):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-s', '--stage', default='dev')
+    parser.add_argument('-p', '--profile', default='default')
     # app - stores the todo items
     # users - stores the user data.
     parser.add_argument('-t', '--table-type', default='app',
                         choices=['app', 'users'],
                         help='Specify which type to create')
     args = parser.parse_args()
+    boto3.setup_default_session(profile_name=args.profile)
     table_config = TABLES[args.table_type]
     table_name = create_table(
         table_config['prefix'], table_config['hash_key'],
