@@ -1,2 +1,3 @@
-chalice==1.15.1
 boto3==1.14.22
+botocore==1.17.22
+PyJWT==1.7.1
