@@ -37,7 +37,7 @@ def encode_password(password, salt=None):
     if salt is None:
         salt = os.urandom(16)
     rounds = 100000
-    hashed = hashlib.pbkdf2_hmac('sha256', password, salt, rounds)
+    hashed = hashlib.pbkdf2_hmac('sha256', bytes(password, 'utf-8'), salt, rounds)
     return {
         'hash': 'sha256',
         'salt': salt,
@@ -72,7 +72,9 @@ def main():
     parser.add_argument('-t', '--test-password', action='store_true')
     parser.add_argument('-s', '--stage', default='dev')
     parser.add_argument('-l', '--list-users', action='store_true')
+    parser.add_argument('-p', '--profile', default='default')
     args = parser.parse_args()
+    boto3.setup_default_session(profile_name=args.profile)
     if args.create_user:
         create_user(args.stage)
     elif args.list_users:
