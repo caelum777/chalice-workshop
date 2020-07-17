@@ -4,7 +4,7 @@ from chalice import Chalice, AuthResponse
 from chalicelib import auth, db
 
 
-app = Chalice(app_name='mytodo')
+app = Chalice(app_name='chalice-workshop')
 app.debug = True
 _DB = None
 _USER_DB = None
