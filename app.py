@@ -4,9 +4,10 @@ from chalice import Chalice, AuthResponse
 from chalicelib import auth, db
 
 
-app = Chalice(app_name='chalice-workshop')
+app = Chalice(app_name='mytodo')
 app.debug = True
 _DB = None
+_USER_DB = None
 
 
 @app.route('/login', methods=['POST'])
@@ -40,7 +41,10 @@ def get_users_db():
 def get_app_db():
     global _DB
     if _DB is None:
-        _DB = db.InMemoryTodoDB()
+        _DB = db.DynamoDBTodo(
+            boto3.resource('dynamodb').Table(
+                os.environ['APP_TABLE_NAME'])
+        )
     return _DB
 
 
